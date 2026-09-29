@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TechStrike Store - Premier Gaming & Tech Gear</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --bs-dark-rgb: 15, 23, 42;
+            --primary-accent: #00f2fe;
+            --secondary-accent: #4facfe;
+        }
+        body {
+            background-color: #0b0f19;
+            color: #e2e8f0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .navbar {
+            background-color: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .brand-logo {
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--primary-accent), var(--secondary-accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .hero-banner {
+            background: linear-gradient(rgba(11, 15, 25, 0.7), rgba(11, 15, 25, 0.9)), url('https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=1200&q=80');
+            background-size: cover;
+            background-position: center;
+            border-radius: 16px;
+            padding: 60px 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .product-card {
+            background-color: #1e293b;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            position: relative;
+        }
+        .product-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 242, 254, 0.15);
+            border-color: rgba(0, 242, 254, 0.4);
+        }
+        .product-img {
+            height: 200px;
+            object-fit: cover;
+            border-top-left-radius: 12px;
+            border-top-right-radius: 12px;
+        }
+        .price-tag {
+            color: var(--primary-accent);
+            font-weight: bold;
+            font-size: 1.25rem;
+        }
+        .btn-custom {
+            background: linear-gradient(135deg, var(--primary-accent), var(--secondary-accent));
+            border: none;
+            color: #0b0f19;
+            font-weight: 600;
+        }
+        .btn-custom:hover {
+            opacity: 0.9;
+            color: #000;
+        }
+        .badge-cart {
+            background-color: var(--primary-accent);
+            color: #0b0f19;
+        }
+        .offcanvas, .modal-content {
+            background-color: #1e293b;
+            color: #e2e8f0;
+        }
+        .form-control, .form-select {
+            background-color: #0f172a;
+            border-color: rgba(255, 255, 255, 0.15);
+            color: #fff;
+        }
+        .form-control:focus, .form-select:focus {
+            background-color: #0f172a;
+            color: #fff;
+            border-color: var(--primary-accent);
+            box-shadow: 0 0 0 0.25rem rgba(0, 242, 254, 0.25);
+        }
+        .payment-box {
+            background-color: #0f172a;
+            border: 1px dashed var(--primary-accent);
+            border-radius: 8px;
+            padding: 15px;
+        }
+        .admin-delete-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 10;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark sticky-top">
+        <div class="container">
+            <a class="navbar-brand brand-logo fs-3" href="#">TechStrike Store</a>
+            <div class="d-flex align-items-center gap-3">
+                <button id="adminLoginBtn" class="btn btn-outline-warning btn-sm" onclick="handleAdminAuth()">
+                    <i class="bi bi-shield-lock"></i> Admin
+                </button>
+                <button class="btn btn-outline-light position-relative" type="button" data-bs-toggle="offcanvas" data-bs-target="#cartOffcanvas">
+                    <i class="bi bi-cart3"></i> Cart
+                    <span id="cartBadge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill badge-cart">0</span>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Container -->
+    <div class="container my-4">
+        <!-- Hero Section -->
+        <div class="hero-banner text-center mb-5">
+            <h1 class="display-4 fw-bold">Upgrade Your Gaming Setup</h1>
+            <p class="lead text-light">High-performance gaming accessories & tech gear with Cash on Delivery, JazzCash & EasyPaisa all over Pakistan.</p>
+        </div>
+
+        <!-- Admin Control Bar -->
+        <div id="adminPanel" class="card bg-dark border-warning mb-4 d-none">
+            <div class="card-header bg-warning text-dark fw-bold d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-tools"></i> Admin Panel - Product Manager</span>
+                <button class="btn btn-sm btn-dark" onclick="logoutAdmin()">Logout Admin</button>
+            </div>
+            <div class="card-body">
+                <form id="addProductForm" onsubmit="addNewProduct(event)" class="row g-3">
+                    <div class="col-md-3">
+                        <label class="form-label small text-warning">Product Name</label>
+                        <input type="text" id="prodName" class="form-control" placeholder="e.g. RGB Mouse" required>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label small text-warning">Price (PKR)</label>
+                        <input type="number" id="prodPrice" class="form-control" placeholder="3000" required>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label small text-warning">Category</label>
+                        <select id="prodCategory" class="form-select" required>
+                            <option value="Mouse">Mouse</option>
+                            <option value="Keyboard">Keyboard</option>
+                            <option value="Headset">Headset</option>
+                            <option value="Accessories">Accessories</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label small text-warning">Upload Image (PC File)</label>
+                        <input type="file" id="prodFile" class="form-control mb-1" accept="image/*" onchange="handleFileSelect(event)">
+                        
+                        <div class="text-center small text-muted my-1">- OR -</div>
+                        
+                        <label class="form-label small text-warning">Internet Image URL</label>
+                        <input type="url" id="prodUrl" class="form-control" placeholder="https://example.com/image.jpg">
+                        
+                        <input type="hidden" id="prodImgBase64">
+                    </div>
+                    <div class="col-md-2 d-flex align-items-end">
+                        <button type="submit" class="btn btn-warning w-100 fw-bold">+ Add Item</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Filters & Search -->
+        <div class="row g-3 mb-4 align-items-center">
+            <div class="col-md-6">
+                <input type="text" id="searchInput" class="form-control form-control-lg" placeholder="Search products..." onkeyup="filterProducts()">
+            </div>
+            <div class="col-md-6 d-flex gap-2 justify-content-md-end">
+                <button class="btn btn-outline-info active" onclick="filterCategory('all', this)">All</button>
+                <button class="btn btn-outline-info" onclick="filterCategory('Mouse', this)">Mice</button>
+                <button class="btn btn-outline-info" onclick="filterCategory('Keyboard', this)">Keyboards</button>
+                <button class="btn btn-outline-info" onclick="filterCategory('Headset', this)">Headsets</button>
+            </div>
+        </div>
+
+        <!-- Product Grid -->
+        <div class="row g-4" id="productGrid">
+            <!-- Products rendered dynamically -->
+        </div>
+    </div>
+
+    <!-- Cart Offcanvas -->
+    <div class="offcanvas offcanvas-end" tabindex="-1" id="cartOffcanvas">
+        <div class="offcanvas-header border-bottom border-secondary">
+            <h5 class="offcanvas-title"><i class="bi bi-bag"></i> Your Shopping Cart</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas"></button>
+        </div>
+        <div class="offcanvas-body d-flex flex-column">
+            <div id="cartItems" class="flex-grow-1 overflow-auto mb-3">
+                <!-- Cart items rendered here -->
+            </div>
+            <div class="border-top border-secondary pt-3">
+                <div class="d-flex justify-content-between fs-5 fw-bold mb-3">
+                    <span>Total:</span>
+                    <span id="cartTotal" class="price-tag">Rs. 0</span>
+                </div>
+                <button class="btn btn-custom w-100 py-2 fs-5" onclick="openCheckout()" id="checkoutBtn" disabled>Proceed to Checkout</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Checkout Modal -->
+    <div class="modal fade" id="checkoutModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header border-bottom border-secondary">
+                    <h5 class="modal-title"><i class="bi bi-truck"></i> Shipping & Payment Details</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="checkoutForm" onsubmit="processOrder(event)">
+                        <div class="mb-3">
+                            <label class="form-label">Full Name</label>
+                            <input type="text" id="custName" class="form-control" required placeholder="Muhammad Awais">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Phone Number (WhatsApp)</label>
+                            <input type="tel" id="custPhone" class="form-control" required placeholder="03184366802">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Complete Address</label>
+                            <textarea id="custAddress" class="form-control" rows="2" required placeholder="House #, Street #, Area, City"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Payment Method</label>
+                            <select id="paymentMethod" class="form-select" onchange="togglePaymentInfo()" required>
+                                <option value="Cash on Delivery (COD)">Cash on Delivery (COD)</option>
+                                <option value="JazzCash">JazzCash (Direct Transfer)</option>
+                                <option value="EasyPaisa">EasyPaisa (Direct Transfer)</option>
+                            </select>
+                        </div>
+
+                        <!-- Dynamic Online Payment Details -->
+                        <div id="onlinePaymentDetails" class="payment-box mb-3 d-none">
+                            <h6 class="text-info mb-2" id="paymentTitle"><i class="bi bi-wallet2"></i> Send Payment To:</h6>
+                            <p class="mb-1"><strong>Account Title:</strong> <span class="text-warning">Muhammad Awais</span></p>
+                            <div class="d-flex align-items-center justify-content-between mb-2">
+                                <span><strong>Account No:</strong> <span class="text-warning fs-5">03184366802</span></span>
+                                <button type="button" class="btn btn-sm btn-outline-info" onclick="copyAccountNo()">Copy</button>
+                            </div>
+                            <div class="mt-3">
+                                <label class="form-label small text-light">Transaction ID (TID) / Reference Number</label>
+                                <input type="text" id="transId" class="form-control form-control-sm" placeholder="e.g. 1234567890">
+                            </div>
+                        </div>
+
+                        <div class="p-3 bg-dark rounded mb-3">
+                            <div class="d-flex justify-content-between fw-bold">
+                                <span>Order Total:</span>
+                                <span id="modalTotal" class="price-tag">Rs. 0</span>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-custom w-100 py-2">Confirm Order via WhatsApp</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const ADMIN_WHATSAPP = "923184366802"; 
+        const ADMIN_PASS = "techstrike123";
+        let isAdminLoggedIn = false;
+
+        const defaultProducts = [
+            { id: 1, name: "RGB Mechanical Gaming Keyboard", category: "Keyboard", price: 4500, img: "https://images.unsplash.com/photo-1587829741301-dc798b83add3?auto=format&fit=crop&w=500&q=80" },
+            { id: 2, name: "Pro Gaming Wireless Mouse 16000 DPI", category: "Mouse", price: 3200, img: "https://images.unsplash.com/photo-1615663245857-ac93bb7c39e7?auto=format&fit=crop&w=500&q=80" },
+            { id: 3, name: "7.1 Surround Sound Gaming Headset", category: "Headset", price: 5800, img: "https://images.unsplash.com/photo-1546435770-a3e426bf472b?auto=format&fit=crop&w=500&q=80" }
+        ];
+
+        let products = JSON.parse(localStorage.getItem('techstrike_products')) || defaultProducts;
+        let cart = [];
+        let selectedCategory = 'all';
+
+        function renderProducts() {
+            const grid = document.getElementById('productGrid');
+            const search = document.getElementById('searchInput').value.toLowerCase();
+            grid.innerHTML = '';
+
+            const filtered = products.filter(p => {
+                const matchesCat = selectedCategory === 'all' || p.category === selectedCategory;
+                const matchesSearch = p.name.toLowerCase().includes(search);
+                return matchesCat && matchesSearch;
+            });
+
+            if (filtered.length === 0) {
+                grid.innerHTML = `<div class="col-12 text-center text-muted my-5"><h4>No products found</h4></div>`;
+                return;
+            }
+
+            filtered.forEach(p => {
+                const deleteBtnHtml = isAdminLoggedIn ? 
+                    `<button class="btn btn-danger btn-sm admin-delete-btn" onclick="deleteProduct(${p.id})"><i class="bi bi-trash"></i></button>` : '';
+
+                grid.innerHTML += `
+                    <div class="col-md-4 col-sm-6">
+                        <div class="card product-card h-100">
+                            ${deleteBtnHtml}
+                            <img src="${p.img}" class="product-img card-img-top" alt="${p.name}">
+                            <div class="card-body d-flex flex-column">
+                                <span class="badge bg-secondary mb-2 align-self-start">${p.category}</span>
+                                <h5 class="card-title text-white">${p.name}</h5>
+                                <div class="mt-auto d-flex justify-content-between align-items-center pt-3">
+                                    <span class="price-tag">Rs. ${p.price.toLocaleString()}</span>
+                                    <button class="btn btn-custom btn-sm px-3" onclick="addToCart(${p.id})">
+                                        <i class="bi bi-cart-plus"></i> Add
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function handleFileSelect(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(evt) {
+                    document.getElementById('prodImgBase64').value = evt.target.result;
+                    document.getElementById('prodUrl').value = ""; 
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function handleAdminAuth() {
+            if (isAdminLoggedIn) {
+                logoutAdmin();
+                return;
+            }
+            const password = prompt("Enter Admin Password:");
+            if (password === ADMIN_PASS) {
+                isAdminLoggedIn = true;
+                document.getElementById('adminPanel').classList.remove('d-none');
+                document.getElementById('adminLoginBtn').innerHTML = `<i class="bi bi-shield-check"></i> Admin Mode On`;
+                document.getElementById('adminLoginBtn').classList.replace('btn-outline-warning', 'btn-warning');
+                renderProducts();
+            } else if (password !== null) {
+                alert("Incorrect Password!");
+            }
+        }
+
+        function logoutAdmin() {
+            isAdminLoggedIn = false;
+            document.getElementById('adminPanel').classList.add('d-none');
+            document.getElementById('adminLoginBtn').innerHTML = `<i class="bi bi-shield-lock"></i> Admin`;
+            document.getElementById('adminLoginBtn').classList.replace('btn-warning', 'btn-outline-warning');
+            renderProducts();
+        }
+
+        function addNewProduct(e) {
+            e.preventDefault();
+            const name = document.getElementById('prodName').value;
+            const price = parseInt(document.getElementById('prodPrice').value);
+            const category = document.getElementById('prodCategory').value;
+            const fileImg = document.getElementById('prodImgBase64').value;
+            const urlImg = document.getElementById('prodUrl').value;
+
+            const finalImg = fileImg || urlImg;
+
+            if (!finalImg) {
+                alert("Please select a file from PC OR enter an Image URL!");
+                return;
+            }
+
+            const newProd = {
+                id: Date.now(),
+                name: name,
+                price: price,
+                category: category,
+                img: finalImg
+            };
+
+            products.push(newProd);
+            localStorage.setItem('techstrike_products', JSON.stringify(products));
+            renderProducts();
+            document.getElementById('addProductForm').reset();
+            document.getElementById('prodImgBase64').value = "";
+            alert("New product added successfully!");
+        }
+
+        function deleteProduct(id) {
+            if (confirm("Are you sure you want to delete this product?")) {
+                products = products.filter(p => p.id !== id);
+                localStorage.setItem('techstrike_products', JSON.stringify(products));
+                renderProducts();
+            }
+        }
+
+        function filterCategory(cat, btn) {
+            selectedCategory = cat;
+            document.querySelectorAll('.btn-outline-info').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            renderProducts();
+        }
+
+        function filterProducts() {
+            renderProducts();
+        }
+
+        function addToCart(id) {
+            const product = products.find(p => p.id === id);
+            const item = cart.find(i => i.id === id);
+            if (item) {
+                item.qty++;
+            } else {
+                cart.push({ ...product, qty: 1 });
+            }
+            updateCart();
+        }
+
+        function changeQty(id, delta) {
+            const item = cart.find(i => i.id === id);
+            if (item) {
+                item.qty += delta;
+                if (item.qty <= 0) {
+                    cart = cart.filter(i => i.id !== id);
+                }
+            }
+            updateCart();
+        }
+
+        function updateCart() {
+            const cartContainer = document.getElementById('cartItems');
+            const cartBadge = document.getElementById('cartBadge');
+            const cartTotal = document.getElementById('cartTotal');
+            const checkoutBtn = document.getElementById('checkoutBtn');
+
+            const totalItems = cart.reduce((sum, item) => sum + item.qty, 0);
+            const totalPrice = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+
+            cartBadge.innerText = totalItems;
+            cartTotal.innerText = `Rs. ${totalPrice.toLocaleString()}`;
+            checkoutBtn.disabled = cart.length === 0;
+
+            cartContainer.innerHTML = '';
+            if (cart.length === 0) {
+                cartContainer.innerHTML = `<div class="text-center text-muted my-5"><i class="bi bi-cart-x fs-1"></i><p>Your cart is empty</p></div>`;
+                return;
+            }
+
+            cart.forEach(item => {
+                cartContainer.innerHTML += `
+                    <div class="d-flex align-items-center justify-content-between p-2 mb-2 bg-dark rounded">
+                        <div>
+                            <h6 class="mb-0 text-white">${item.name}</h6>
+                            <small class="text-info">Rs. ${item.price.toLocaleString()} x ${item.qty}</small>
+                        </div>
+                        <div class="d-flex align-items-center gap-2">
+                            <button class="btn btn-sm btn-outline-secondary py-0 px-2" onclick="changeQty(${item.id}, -1)">-</button>
+                            <span>${item.qty}</span>
+                            <button class="btn btn-sm btn-outline-secondary py-0 px-2" onclick="changeQty(${item.id}, 1)">+</button>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function openCheckout() {
+            const totalPrice = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+            document.getElementById('modalTotal').innerText = `Rs. ${totalPrice.toLocaleString()}`;
+            const modal = new bootstrap.Modal(document.getElementById('checkoutModal'));
+            modal.show();
+        }
+
+        function togglePaymentInfo() {
+            const method = document.getElementById('paymentMethod').value;
+            const detailsBox = document.getElementById('onlinePaymentDetails');
+            const title = document.getElementById('paymentTitle');
+
+            if (method === 'JazzCash' || method === 'EasyPaisa') {
+                detailsBox.classList.remove('d-none');
+                title.innerHTML = `<i class="bi bi-wallet2"></i> Send ${method} Payment To:`;
+            } else {
+                detailsBox.classList.add('d-none');
+            }
+        }
+
+        function copyAccountNo() {
+            navigator.clipboard.writeText("03184366802");
+            alert("Account Number (03184366802) copied to clipboard!");
+        }
+
+        function processOrder(e) {
+            e.preventDefault();
+            const name = document.getElementById('custName').value;
+            const phone = document.getElementById('custPhone').value;
+            const address = document.getElementById('custAddress').value;
+            const payment = document.getElementById('paymentMethod').value;
+            const transId = document.getElementById('transId').value || 'N/A';
+            const totalPrice = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+
+            let orderItemsText = "";
+            cart.forEach((item, index) => {
+                orderItemsText += `${index + 1}. ${item.name} x${item.qty} - Rs. ${(item.price * item.qty).toLocaleString()}\n`;
+            });
+
+            let paymentDetailsText = `💳 Payment Method: ${payment}\n`;
+            if (payment === 'JazzCash' || payment === 'EasyPaisa') {
+                paymentDetailsText += `🔢 Transaction ID (TID): ${transId}\n`;
+            }
+
+            const whatsappMessage = `*NEW ORDER PLACED!* 🛒\n\n` +
+                `*Customer Details:*\n` +
+                `👤 Name: ${name}\n` +
+                `📞 Phone: ${phone}\n` +
+                `📍 Address: ${address}\n` +
+                `${paymentDetailsText}\n` +
+                `*Order Items:*\n${orderItemsText}\n` +
+                `*Total Bill:* Rs. ${totalPrice.toLocaleString()}\n\n` +
+                `Please confirm my order. Thank you!`;
+
+            const encodedMessage = encodeURIComponent(whatsappMessage);
+            const whatsappURL = `https://wa.me/${ADMIN_WHATSAPP}?text=${encodedMessage}`;
+
+            cart = [];
+            updateCart();
+            const modalEl = document.getElementById('checkoutModal');
+            const modal = bootstrap.Modal.getInstance(modalEl);
+            modal.hide();
+
+            window.open(whatsappURL, '_blank');
+        }
+
+        renderProducts();
+    </script>
+</body>
+</html>
